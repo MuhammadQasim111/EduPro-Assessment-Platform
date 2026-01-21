@@ -1,0 +1,8 @@
+{
+  "name": "EduPro: Production-Grade Assessment System",
+  "description": "A robust, multi-tenant online assessment platform designed with Clean Architecture principles, featuring role-based access control, real-time exam execution, and AI-powered grading analysis.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
