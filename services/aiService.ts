@@ -2,44 +2,52 @@
 import { GoogleGenAI } from "@google/genai";
 import { Exam, Submission } from "../types";
 
+/**
+ * Generates a professional pedagogical analysis of a student's submission.
+ * Uses gemini-3-pro-preview for complex reasoning tasks.
+ */
 export const getAIGradingFeedback = async (exam: Exam, submission: Submission): Promise<string> => {
-  // Fix: Always create a new GoogleGenAI instance right before making an API call to ensure use of latest credentials
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const apiKey = process.env.API_KEY;
+  
+  if (!apiKey) {
+    return "AI Evaluation engine is offline. Please ensure your production API keys are configured.";
+  }
+
+  // Create fresh instance per call to ensure latest config/key
+  const ai = new GoogleGenAI({ apiKey });
 
   try {
     const prompt = `
-      As an expert educator, provide concise and constructive feedback for a student's exam submission.
+      Act as a Senior Software Architect and Academic Lead. Analyze this production assessment submission.
       
-      EXAM: ${exam.title}
-      DESCRIPTION: ${exam.description}
+      ASSESSMENT CONTEXT:
+      - Title: ${exam.title}
+      - Learning Objectives: ${exam.description}
       
-      SUBMISSION DATA:
-      - Score: ${submission.score} / ${submission.totalPoints}
-      - Student Answers: ${JSON.stringify(submission.answers)}
-      - Correct Answers: ${JSON.stringify(exam.questions.map(q => ({ id: q.id, correct: q.correctAnswer })))}
+      STUDENT PERFORMANCE:
+      - Achieved Score: ${submission.score} / ${submission.totalPoints}
+      - Detailed Answers provided by Student: ${JSON.stringify(submission.answers)}
+      - Rubric (Correct Solutions): ${JSON.stringify(exam.questions.map(q => ({ text: q.text, correct: q.correctAnswer })))}
       
-      INSTRUCTIONS:
-      1. Identify strengths based on correct answers.
-      2. Identify weak areas.
-      3. Suggest 2-3 topics for further study.
-      4. Keep it professional but encouraging.
+      REQUIRED OUTPUT (Markdown format):
+      1. Executive Performance Summary.
+      2. Specific Technical Gap Analysis.
+      3. Three targeted "Next Level" growth recommendations.
+      4. A closing encouraging remark.
     `;
 
-    // Fix: Using generateContent with Gemini 3 Flash and optional thinking configuration for optimal performance
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
+      model: 'gemini-3-pro-preview', // High-quality reasoning for complex feedback
       contents: prompt,
       config: {
-        // Set thinkingBudget to 0 for lower latency as this is a straightforward summarization/feedback task
         thinkingConfig: { thinkingBudget: 0 }
       }
     });
 
-    // Fix: response.text is a property, not a method; extracting directly
-    return response.text || "Unable to generate AI feedback at this time.";
+    // Directly access the .text property as per guidelines
+    return response.text || "The analysis engine completed the task but returned an unexpected empty response.";
   } catch (error) {
-    console.error("AI Feedback Error:", error);
-    // Generic error message for student privacy and security
-    return "The AI analysis service is temporarily unavailable. Please try again later.";
+    console.error("Critical AI Service Error:", error);
+    return "An internal cognitive services error occurred. Our engineers have been notified.";
   }
 };

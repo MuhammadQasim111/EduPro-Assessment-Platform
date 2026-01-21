@@ -9,11 +9,14 @@ import ExamRunnerView from './views/ExamRunnerView';
 import SubmissionReviewView from './views/SubmissionReviewView';
 import Sidebar from './components/Sidebar';
 
-// Mock Initial Data Sync with "Local Backend"
 const App: React.FC = () => {
   const [auth, setAuth] = useState<AuthState>(() => {
     const saved = localStorage.getItem('auth');
-    return saved ? JSON.parse(saved) : { user: null, token: null, isAuthenticated: false };
+    try {
+      return saved ? JSON.parse(saved) : { user: null, token: null, isAuthenticated: false };
+    } catch (e) {
+      return { user: null, token: null, isAuthenticated: false };
+    }
   });
 
   useEffect(() => {
@@ -29,10 +32,11 @@ const App: React.FC = () => {
     localStorage.removeItem('auth');
   };
 
-  // Fix: Changed JSX.Element to React.ReactNode to resolve "Cannot find namespace 'JSX'" on line 32
-  const ProtectedRoute = ({ children, roles }: { children: React.ReactNode, roles?: UserRole[] }) => {
+  // Fixed: explicitly made children optional in ProtectedRoute prop types to satisfy TypeScript validation in Route elements
+  const ProtectedRoute = ({ children, roles }: { children?: React.ReactNode, roles?: UserRole[] }) => {
     if (!auth.isAuthenticated) return <Navigate to="/login" replace />;
     if (roles && auth.user && !roles.includes(auth.user.role)) return <Navigate to="/dashboard" replace />;
+    
     return (
       <div className="flex min-h-screen bg-gray-50">
         <Sidebar user={auth.user!} onLogout={handleLogout} />
